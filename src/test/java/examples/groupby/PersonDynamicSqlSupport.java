@@ -1,5 +1,5 @@
 /**
- *    Copyright 2016-2017 the original author or authors.
+ *    Copyright 2016-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ public final class PersonDynamicSqlSupport {
     public static final SqlColumn<String> gender = person.gender;
     public static final SqlColumn<String> human = person.human;
     public static final SqlColumn<Integer> age = person.age;
+    public static final SqlColumn<Integer> addressId = person.addressId;
 
     public static final class Person extends SqlTable {
         public final SqlColumn<Integer> id = column("person_id", JDBCType.INTEGER);
@@ -36,6 +37,7 @@ public final class PersonDynamicSqlSupport {
         public final SqlColumn<String> gender = column("gender", JDBCType.VARCHAR);
         public final SqlColumn<String> human = column("human_flag", JDBCType.VARCHAR);
         public final SqlColumn<Integer> age = column("age", JDBCType.INTEGER);
+        public final SqlColumn<Integer> addressId = column("address_id", JDBCType.INTEGER);
 
         public Person() {
             super("Person");

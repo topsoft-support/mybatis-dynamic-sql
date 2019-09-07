@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 
 import org.mybatis.dynamic.sql.BasicColumn;
 import org.mybatis.dynamic.sql.BindableColumn;
@@ -37,6 +38,7 @@ import org.mybatis.dynamic.sql.util.SelectMapping;
 import org.mybatis.dynamic.sql.util.StringConstantMapping;
 import org.mybatis.dynamic.sql.util.UpdateMapping;
 import org.mybatis.dynamic.sql.util.ValueMapping;
+import org.mybatis.dynamic.sql.util.mybatis3.MyBatis3Utils;
 import org.mybatis.dynamic.sql.where.AbstractWhereDSL;
 
 public class UpdateDSL<R> implements Buildable<R> {
@@ -44,6 +46,7 @@ public class UpdateDSL<R> implements Buildable<R> {
     private Function<UpdateModel, R> adapterFunction;
     private List<UpdateMapping> columnMappings = new ArrayList<>();
     private SqlTable table;
+    private UpdateWhereBuilder whereBuilder = new UpdateWhereBuilder();
     
     private UpdateDSL(SqlTable table, Function<UpdateModel, R> adapterFunction) {
         this.table = Objects.requireNonNull(table);
@@ -55,18 +58,15 @@ public class UpdateDSL<R> implements Buildable<R> {
     }
     
     public UpdateWhereBuilder where() {
-        return new UpdateWhereBuilder();
-    }
-    
-    public <T> UpdateWhereBuilder where(BindableColumn<T> column, VisitableCondition<T> condition) {
-        return new UpdateWhereBuilder(column, condition);
+        return whereBuilder;
     }
     
     public <T> UpdateWhereBuilder where(BindableColumn<T> column, VisitableCondition<T> condition,
             SqlCriterion<?>...subCriteria) {
-        return new UpdateWhereBuilder(column, condition, subCriteria);
+        whereBuilder.and(column, condition, subCriteria);
+        return whereBuilder;
     }
-    
+
     /**
      * WARNING! Calling this method could result in an update statement that updates
      * all rows in a table.
@@ -77,6 +77,7 @@ public class UpdateDSL<R> implements Buildable<R> {
     public R build() {
         UpdateModel updateModel = UpdateModel.withTable(table)
                 .withColumnMappings(columnMappings)
+                .withWhereModel(whereBuilder.buildWhereModel())
                 .build();
         return adapterFunction.apply(updateModel);
     }
@@ -89,6 +90,17 @@ public class UpdateDSL<R> implements Buildable<R> {
         return update(Function.identity(), table);
     }
     
+    /**
+     * Executes an update using a MyBatis3 mapper method.
+     * 
+     * @deprecated in favor of {@link MyBatis3Utils#update(ToIntFunction, SqlTable, UpdateDSLCompleter)}. This
+     *     method will be removed without direct replacement in a future version.
+     * @param <T> return value from an update method - typically Integer
+     * @param mapperMethod MyBatis3 mapper method that performs the update
+     * @param table table to update
+     * @return number of records updated - typically as Integer
+     */
+    @Deprecated
     public static <T> UpdateDSL<MyBatis3UpdateModelAdapter<T>> updateWithMapper(
             Function<UpdateStatementProvider, T> mapperMethod, SqlTable table) {
         return update(updateModel -> MyBatis3UpdateModelAdapter.of(updateModel, mapperMethod), table);
@@ -154,22 +166,9 @@ public class UpdateDSL<R> implements Buildable<R> {
             super();
         }
         
-        public <T> UpdateWhereBuilder(BindableColumn<T> column, VisitableCondition<T> condition) {
-            super(column, condition);
-        }
-        
-        public <T> UpdateWhereBuilder(BindableColumn<T> column, VisitableCondition<T> condition,
-                SqlCriterion<?>...subCriteria) {
-            super(column, condition, subCriteria);
-        }
-        
         @Override
         public R build() {
-            UpdateModel updateModel = UpdateModel.withTable(table)
-                    .withColumnMappings(columnMappings)
-                    .withWhereModel(buildWhereModel())
-                    .build();
-            return adapterFunction.apply(updateModel);
+            return UpdateDSL.this.build();
         }
         
         @Override

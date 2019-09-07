@@ -15,25 +15,30 @@
  */
 package org.mybatis.dynamic.sql.render;
 
-import java.util.Optional;
-
 import org.mybatis.dynamic.sql.BindableColumn;
 
 public abstract class RenderingStrategy {
+    /**
+     * Rendering strategy for MyBatis3.
+     * 
+     * @deprecated use {@link RenderingStrategies#MYBATIS3} instead
+     */
+    @Deprecated
     @SuppressWarnings("squid:S2390")
     public static final RenderingStrategy MYBATIS3 = new MyBatis3RenderingStrategy();
+
+    /**
+     * Rendering strategy for Spring JDBC Template Named Parameters.
+     * 
+     * @deprecated use {@link RenderingStrategies#SPRING_NAMED_PARAMETER} instead
+     */
+    @Deprecated
     @SuppressWarnings("squid:S2390")
     public static final RenderingStrategy SPRING_NAMED_PARAMETER = new SpringNamedParameterRenderingStrategy();
+
     public static final String DEFAULT_PARAMETER_PREFIX = "parameters"; //$NON-NLS-1$
     
-    public String getFormattedJdbcPlaceholder(BindableColumn<?> column, String prefix, String parameterName) {
-        return getFormattedJdbcPlaceholder(Optional.of(column), prefix, parameterName);
-    }
+    public abstract String getFormattedJdbcPlaceholder(BindableColumn<?> column, String prefix, String parameterName);
 
-    public String getFormattedJdbcPlaceholder(String prefix, String parameterName) {
-        return getFormattedJdbcPlaceholder(Optional.empty(), prefix, parameterName);
-    }
-
-    public abstract String getFormattedJdbcPlaceholder(Optional<BindableColumn<?>> column, String prefix,
-            String parameterName);
+    public abstract String getFormattedJdbcPlaceholder(String prefix, String parameterName);
 }
